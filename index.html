@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskMaster - Your Personal Task Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      /* Custom CSS for animations and transitions */
+      .task-item {
+        transition: all 0.3s ease;
+      }
+      .task-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .fade-in {
+        animation: fadeIn 0.5s;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .slide-in {
+        animation: slideIn 0.3s forwards;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        animation: slideIn 0.3s forwards;
+      }
+      .priority-high {
+        border-left: 4px solid #ef4444;
+      }
+      .priority-medium {
+        border-left: 4px solid #f59e0b;
+      }
+      .priority-low {
+        border-left: 4px solid #10b981;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <!-- Language Toggle -->
+    <div class="fixed top-4 right-4 z-50">
+      <button
+        id="languageToggle"
+        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full shadow-md flex items-center"
+      >
+        <i class="fas fa-language mr-2"></i>
+        <span id="languageText">EN</span>
+      </button>
+    </div>
+
+    <!-- Auth Modal -->
+    <div
+      id="authModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-8 w-full max-w-md relative fade-in">
+        <button
+          id="closeAuthModal"
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+
+        <div id="loginForm">
+          <h2
+            class="text-2xl font-bold mb-6 text-center"
+            data-i18n="loginTitle"
+          >
+            Login
+          </h2>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" data-i18n="username"
+              >Username</label
+            >
+            <input
+              type="text"
+              id="loginUsername"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-6">
+            <label class="block text-gray-700 mb-2" data-i18n="password"
+              >Password</label
+            >
+            <input
+              type="password"
+              id="loginPassword"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            id="loginBtn"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg mb-4"
+            data-i18n="login"
+          >
+            Login
+          </button>
+          <p class="text-center text-gray-600" data-i18n="noAccount">
+            Don't have an account?
+            <button
+              id="showRegisterBtn"
+              class="text-blue-500 hover:underline"
+              data-i18n="registerHere"
+            >
+              Register here
+            </button>
+          </p>
+        </div>
+
+        <div id="registerForm" class="hidden">
+          <h2
+            class="text-2xl font-bold mb-6 text-center"
+            data-i18n="registerTitle"
+          >
+            Register
+          </h2>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" data-i18n="username"
+              >Username</label
+            >
+            <input
+              type="text"
+              id="registerUsername"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" data-i18n="email"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="registerEmail"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" data-i18n="password"
+              >Password</label
+            >
+            <input
+              type="password"
+              id="registerPassword"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-6">
+            <label class="block text-gray-700 mb-2" data-i18n="confirmPassword"
+              >Confirm Password</label
+            >
+            <input
+              type="password"
+              id="registerConfirmPassword"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            id="registerBtn"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg mb-4"
+            data-i18n="register"
+          >
+            Register
+          </button>
+          <p class="text-center text-gray-600" data-i18n="haveAccount">
+            Already have an account?
+            <button
+              id="showLoginBtn"
+              class="text-blue-500 hover:underline"
+              data-i18n="loginHere"
+            >
+              Login here
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="appContainer" class="container mx-auto px-4 py-8 hidden">
+      <!-- Header -->
+      <header class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800" data-i18n="appTitle">
+            TaskMaster
+          </h1>
+          <p class="text-gray-600" data-i18n="welcomeMessage">
+            Welcome back,
+            <span id="usernameDisplay" class="font-semibold">User</span>!
+          </p>
+        </div>
+        <button
+          id="logoutBtn"
+          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center"
+          data-i18n="logout"
+        >
+          <i class="fas fa-sign-out-alt mr-2"></i>
+          <span>Logout</span>
+        </button>
+      </header>
+
+      <!-- Task Creation -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4" data-i18n="createTask">
+          Create New Task
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-gray-700 mb-2" data-i18n="taskTitle"
+              >Title</label
+            >
+            <input
+              type="text"
+              id="taskTitle"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label class="block text-gray-700 mb-2" data-i18n="dueDate"
+              >Due Date</label
+            >
+            <input
+              type="datetime-local"
+              id="taskDueDate"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 mb-2" data-i18n="taskDescription"
+            >Description</label
+          >
+          <textarea
+            id="taskDescription"
+            rows="3"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          ></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label class="block text-gray-700 mb-2" data-i18n="priority"
+              >Priority</label
+            >
+            <select
+              id="taskPriority"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="low" data-i18n="lowPriority">Low</option>
+              <option value="medium" data-i18n="mediumPriority">Medium</option>
+              <option value="high" data-i18n="highPriority">High</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-700 mb-2" data-i18n="category"
+              >Category</label
+            >
+            <input
+              type="text"
+              id="taskCategory"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label class="block text-gray-700 mb-2" data-i18n="tags"
+              >Tags (comma separated)</label
+            >
+            <input
+              type="text"
+              id="taskTags"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        <button
+          id="addTaskBtn"
+          class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center mx-auto"
+          data-i18n="addTask"
+        >
+          <i class="fas fa-plus-circle mr-2"></i>
+          <span>Add Task</span>
+        </button>
+      </div>
+
+      <!-- Task Filters -->
+      <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center space-x-2">
+            <label class="text-gray-700" data-i18n="filterBy">Filter by:</label>
+            <select id="filterPriority" class="px-3 py-1 border rounded-lg">
+              <option value="all" data-i18n="allPriorities">
+                All Priorities
+              </option>
+              <option value="high" data-i18n="highPriority">High</option>
+              <option value="medium" data-i18n="mediumPriority">Medium</option>
+              <option value="low" data-i18n="lowPriority">Low</option>
+            </select>
+            <select id="filterStatus" class="px-3 py-1 border rounded-lg">
+              <option value="all" data-i18n="allStatuses">All Statuses</option>
+              <option value="completed" data-i18n="completed">Completed</option>
+              <option value="pending" data-i18n="pending">Pending</option>
+              <option value="overdue" data-i18n="overdue">Overdue</option>
+            </select>
+          </div>
+          <div class="flex items-center space-x-2">
+            <label class="text-gray-700" data-i18n="sortBy">Sort by:</label>
+            <select id="sortTasks" class="px-3 py-1 border rounded-lg">
+              <option value="dueDate" data-i18n="dueDate">Due Date</option>
+              <option value="priority" data-i18n="priority">Priority</option>
+              <option value="createdAt" data-i18n="createdAt">
+                Created At
+              </option>
+            </select>
+            <select id="sortOrder" class="px-3 py-1 border rounded-lg">
+              <option value="asc" data-i18n="ascending">Ascending</option>
+              <option value="desc" data-i18n="descending">Descending</option>
+            </select>
+          </div>
+          <button
+            id="applyFiltersBtn"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-lg"
+            data-i18n="apply"
+          >
+            Apply
+          </button>
+          <button
+            id="resetFiltersBtn"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-1 rounded-lg"
+            data-i18n="reset"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Task Statistics -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-blue-500 text-white rounded-lg p-4 shadow-md">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-sm" data-i18n="totalTasks">Total Tasks</p>
+              <h3 class="text-2xl font-bold" id="totalTasks">0</h3>
+            </div>
+            <i class="fas fa-tasks text-3xl opacity-70"></i>
+          </div>
+        </div>
+        <div class="bg-green-500 text-white rounded-lg p-4 shadow-md">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-sm" data-i18n="completedTasks">Completed</p>
+              <h3 class="text-2xl font-bold" id="completedTasks">0</h3>
+            </div>
+            <i class="fas fa-check-circle text-3xl opacity-70"></i>
+          </div>
+        </div>
+        <div class="bg-red-500 text-white rounded-lg p-4 shadow-md">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-sm" data-i18n="pendingTasks">Pending</p>
+              <h3 class="text-2xl font-bold" id="pendingTasks">0</h3>
+            </div>
+            <i class="fas fa-clock text-3xl opacity-70"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task List -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold" data-i18n="yourTasks">
+            Your Tasks
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button
+              id="exportTasksBtn"
+              class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center"
+              data-i18n="exportTasks"
+            >
+              <i class="fas fa-file-export mr-2"></i>
+              <span>Export</span>
+            </button>
+            <button
+              id="importTasksBtn"
+              class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center"
+              data-i18n="importTasks"
+            >
+              <i class="fas fa-file-import mr-2"></i>
+              <span>Import</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="taskList" class="space-y-4">
+          <!-- Tasks will be added here dynamically -->
+          <div
+            class="text-center py-8 text-gray-500"
+            id="noTasksMessage"
+            data-i18n="noTasks"
+          >
+            You don't have any tasks yet. Create your first task above!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div
+      id="taskDetailModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="bg-white rounded-lg p-8 w-full max-w-2xl relative fade-in max-h-[90vh] overflow-y-auto"
+      >
+        <button
+          id="closeTaskDetailModal"
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+
+        <div id="taskDetailContent">
+          <!-- Task details will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Import/Export Modal -->
+    <div
+      id="importExportModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div class="bg-white rounded-lg p-8 w-full max-w-md relative fade-in">
+        <button
+          id="closeImportExportModal"
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+
+        <div id="exportContent" class="hidden">
+          <h2 class="text-xl font-bold mb-4" data-i18n="exportTasks">
+            Export Tasks
+          </h2>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" data-i18n="exportFormat"
+              >Format</label
+            >
+            <select
+              id="exportFormat"
+              class="w-full px-4 py-2 border rounded-lg"
+            >
+              <option value="txt" data-i18n="txtFormat">
+                Plain Text (TXT)
+              </option>
+              <option value="json" data-i18n="jsonFormat">JSON</option>
+            </select>
+          </div>
+          <button
+            id="downloadExportBtn"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
+            data-i18n="download"
+          >
+            Download
+          </button>
+        </div>
+
+        <div id="importContent" class="hidden">
+          <h2 class="text-xl font-bold mb-4" data-i18n="importTasks">
+            Import Tasks
+          </h2>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" data-i18n="selectFile"
+              >Select File</label
+            >
+            <input
+              type="file"
+              id="importFile"
+              class="w-full px-4 py-2 border rounded-lg"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" data-i18n="importFormat"
+              >Format</label
+            >
+            <select
+              id="importFormat"
+              class="w-full px-4 py-2 border rounded-lg"
+            >
+              <option value="txt" data-i18n="txtFormat">
+                Plain Text (TXT)
+              </option>
+              <option value="json" data-i18n="jsonFormat">JSON</option>
+            </select>
+          </div>
+          <button
+            id="confirmImportBtn"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
+            data-i18n="import"
+          >
+            Import
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Area -->
+    <div id="notificationArea"></div>
+
+    <script>
+      // Language support
+      const translations = {
+        en: {
+          loginTitle: "Login",
+          username: "Username",
+          password: "Password",
+          login: "Login",
+          noAccount: "Don't have an account?",
+          registerHere: "Register here",
+          registerTitle: "Register",
+          email: "Email",
+          confirmPassword: "Confirm Password",
+          register: "Register",
+          haveAccount: "Already have an account?",
+          loginHere: "Login here",
+          appTitle: "TaskMaster",
+          welcomeMessage: "Welcome back,",
+          logout: "Logout",
+          createTask: "Create New Task",
+          taskTitle: "Title",
+          dueDate: "Due Date",
+          taskDescription: "Description",
+          priority: "Priority",
+          lowPriority: "Low",
+          mediumPriority: "Medium",
+          highPriority: "High",
+          category: "Category",
+          tags: "Tags (comma separated)",
+          addTask: "Add Task",
+          yourTasks: "Your Tasks",
+          noTasks:
+            "You don't have any tasks yet. Create your first task above!",
+          filterBy: "Filter by:",
+          allPriorities: "All Priorities",
+          allStatuses: "All Statuses",
+          completed: "Completed",
+          pending: "Pending",
+          overdue: "Overdue",
+          sortBy: "Sort by:",
+          created: "Created At",
+          ascending: "Ascending",
+          descending: "Descending",
+          apply: "Apply",
+          reset: "Reset",
+          totalTasks: "Total Tasks",
+          completedTasks: "Completed",
+          pendingTasks: "Pending",
+          exportTasks: "Export",
+          importTasks: "Import",
+          exportTasksTitle: "Export Tasks",
+          exportFormat: "Format",
+          txtFormat: "Plain Text (TXT)",
+          jsonFormat: "JSON",
+          download: "Download",
+          importTasksTitle: "Import Tasks",
+          selectFile: "Select File",
+          importFormat: "Format",
+          import: "Import",
+          taskDetails: "Task Details",
+          editTask: "Edit",
+          deleteTask: "Delete",
+          close: "Close",
+          markComplete: "Mark Complete",
+          markIncomplete: "Mark Incomplete",
+          saveChanges: "Save Changes",
+          cancel: "Cancel",
+          deadline: "Deadline",
+          status: "Status",
+          high: "High",
+          medium: "Medium",
+          low: "Low",
+          completedStatus: "Completed",
+          pendingStatus: "Pending",
+          overdueStatus: "Overdue",
+          createdOn: "Created on",
+          tags: "Tags",
+          noTags: "No tags",
+          notificationTitle: "Task Deadline",
+          notificationMessage: "Your task '{title}' is due soon!",
+          loginError: "Invalid username or password",
+          registerError: "Passwords do not match",
+          registerSuccess: "Registration successful! Please login.",
+          taskAdded: "Task added successfully!",
+          taskUpdated: "Task updated successfully!",
+          taskDeleted: "Task deleted successfully!",
+          tasksImported: "Tasks imported successfully!",
+          tasksExported: "Tasks exported successfully!",
+          confirmDelete: "Are you sure you want to delete this task?",
+          fileRequired: "Please select a file to import",
+        },
+        uk: {
+          loginTitle: "Вхід",
+          username: "Ім'я користувача",
+          password: "Пароль",
+          login: "Увійти",
+          noAccount: "Немає облікового запису?",
+          registerHere: "Зареєструватися тут",
+          registerTitle: "Реєстрація",
+          email: "Електронна пошта",
+          confirmPassword: "Підтвердіть пароль",
+          register: "Зареєструватися",
+          haveAccount: "Вже є обліковий запис?",
+          loginHere: "Увійти тут",
+          appTitle: "Менеджер завдань",
+          welcomeMessage: "Ласкаво просимо,",
+          logout: "Вийти",
+          createTask: "Створити нове завдання",
+          taskTitle: "Назва",
+          dueDate: "Термін виконання",
+          taskDescription: "Опис",
+          priority: "Пріоритет",
+          lowPriority: "Низький",
+          mediumPriority: "Середній",
+          highPriority: "Високий",
+          category: "Категорія",
+          tags: "Теги (через кому)",
+          addTask: "Додати завдання",
+          yourTasks: "Ваші завдання",
+          noTasks: "У вас ще немає завдань. Створіть перше завдання вище!",
+          filterBy: "Фільтрувати за:",
+          allPriorities: "Усі пріоритети",
+          allStatuses: "Усі статуси",
+          completed: "Виконано",
+          pending: "В очікуванні",
+          overdue: "Прострочено",
+          sortBy: "Сортувати за:",
+          created: "Датою створення",
+          ascending: "За зростанням",
+          descending: "За спаданням",
+          apply: "Застосувати",
+          reset: "Скинути",
+          totalTasks: "Усього завдань",
+          completedTasks: "Виконано",
+          pendingTasks: "В очікуванні",
+          exportTasks: "Експорт",
+          importTasks: "Імпорт",
+          exportTasksTitle: "Експорт завдань",
+          exportFormat: "Формат",
+          txtFormat: "Звичайний текст (TXT)",
+          jsonFormat: "JSON",
+          download: "Завантажити",
+          importTasksTitle: "Імпорт завдань",
+          selectFile: "Вибрати файл",
+          importFormat: "Формат",
+          import: "Імпортувати",
+          taskDetails: "Деталі завдання",
+          editTask: "Редагувати",
+          deleteTask: "Видалити",
+          close: "Закрити",
+          markComplete: "Позначити виконаним",
+          markIncomplete: "Позначити невиконаним",
+          saveChanges: "Зберегти зміни",
+          cancel: "Скасувати",
+          deadline: "Кінцевий термін",
+          status: "Статус",
+          high: "Високий",
+          medium: "Середній",
+          low: "Низький",
+          completedStatus: "Виконано",
+          pendingStatus: "В очікуванні",
+          overdueStatus: "Прострочено",
+          createdOn: "Створено",
+          tags: "Теги",
+          noTags: "Немає тегів",
+          notificationTitle: "Термін виконання",
+          notificationMessage:
+            "Термін виконання вашого завдання '{title}' скоро настане!",
+          loginError: "Невірне ім'я користувача або пароль",
+          registerError: "Паролі не співпадають",
+          registerSuccess: "Реєстрація успішна! Будь ласка, увійдіть.",
+          taskAdded: "Завдання успішно додано!",
+          taskUpdated: "Завдання успішно оновлено!",
+          taskDeleted: "Завдання успішно видалено!",
+          tasksImported: "Завдання успішно імпортовано!",
+          tasksExported: "Завдання успішно експортовано!",
+          confirmDelete: "Ви впевнені, що хочете видалити це завдання?",
+          fileRequired: "Будь ласка, виберіть файл для імпорту",
+        },
+      };
+
+      let currentLanguage = "en";
+
+      // Function to translate the page
+      function translatePage(lang) {
+        currentLanguage = lang;
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          const key = element.getAttribute("data-i18n");
+          if (translations[lang][key]) {
+            if (
+              (element.tagName === "INPUT" && element.type === "text") ||
+              element.type === "password" ||
+              element.type === "email"
+            ) {
+              element.placeholder = translations[lang][key];
+            } else {
+              element.textContent = translations[lang][key];
+            }
+          }
+        });
+        document.getElementById("languageText").textContent =
+          lang === "en" ? "EN" : "UK";
+        updateTaskListUI(); // Refresh task list to update translated statuses
+      }
+
+      // User authentication state
+      let currentUser = null;
+      let users = JSON.parse(localStorage.getItem("users")) || [];
+      let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+      // DOM Elements
+      const authModal = document.getElementById("authModal");
+      const appContainer = document.getElementById("appContainer");
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      const languageToggle = document.getElementById("languageToggle");
+      const taskList = document.getElementById("taskList");
+      const noTasksMessage = document.getElementById("noTasksMessage");
+      const taskDetailModal = document.getElementById("taskDetailModal");
+      const importExportModal = document.getElementById("importExportModal");
+      const exportContent = document.getElementById("exportContent");
+      const importContent = document.getElementById("importContent");
+      const notificationArea = document.getElementById("notificationArea");
+
+      // Initialize the app
+      function initApp() {
+        // Check if user is already logged in
+        const loggedInUser = localStorage.getItem("currentUser");
+        if (loggedInUser) {
+          currentUser = JSON.parse(loggedInUser);
+          showApp();
+        } else {
+          showAuthModal();
+        }
+
+        // Set up event listeners
+        setupEventListeners();
+
+        // Check for task deadlines
+        checkDeadlines();
+
+        // Set interval to check deadlines every minute
+        setInterval(checkDeadlines, 60000);
+      }
+
+      // Set up all event listeners
+      function setupEventListeners() {
+        // Auth modal
+        document
+          .getElementById("showRegisterBtn")
+          .addEventListener("click", () => {
+            loginForm.classList.add("hidden");
+            registerForm.classList.remove("hidden");
+          });
+
+        document
+          .getElementById("showLoginBtn")
+          .addEventListener("click", () => {
+            registerForm.classList.add("hidden");
+            loginForm.classList.remove("hidden");
+          });
+
+        document
+          .getElementById("closeAuthModal")
+          .addEventListener("click", hideAuthModal);
+
+        // Login/Register
+        document
+          .getElementById("loginBtn")
+          .addEventListener("click", handleLogin);
+        document
+          .getElementById("registerBtn")
+          .addEventListener("click", handleRegister);
+
+        // Language toggle
+        languageToggle.addEventListener("click", toggleLanguage);
+
+        // Task management
+        document
+          .getElementById("addTaskBtn")
+          .addEventListener("click", addTask);
+        document
+          .getElementById("logoutBtn")
+          .addEventListener("click", handleLogout);
+
+        // Filters
+        document
+          .getElementById("applyFiltersBtn")
+          .addEventListener("click", applyFilters);
+        document
+          .getElementById("resetFiltersBtn")
+          .addEventListener("click", resetFilters);
+
+        // Import/Export
+        document
+          .getElementById("exportTasksBtn")
+          .addEventListener("click", () => {
+            showImportExportModal("export");
+          });
+
+        document
+          .getElementById("importTasksBtn")
+          .addEventListener("click", () => {
+            showImportExportModal("import");
+          });
+
+        document
+          .getElementById("closeImportExportModal")
+          .addEventListener("click", hideImportExportModal);
+        document
+          .getElementById("downloadExportBtn")
+          .addEventListener("click", exportTasks);
+        document
+          .getElementById("confirmImportBtn")
+          .addEventListener("click", importTasks);
+
+        // Task detail modal
+        document
+          .getElementById("closeTaskDetailModal")
+          .addEventListener("click", () => {
+            taskDetailModal.classList.add("hidden");
+          });
+      }
+
+      // Show auth modal
+      function showAuthModal() {
+        authModal.classList.remove("hidden");
+        appContainer.classList.add("hidden");
+      }
+
+      // Hide auth modal
+      function hideAuthModal() {
+        authModal.classList.add("hidden");
+      }
+
+      // Show app
+      function showApp() {
+        authModal.classList.add("hidden");
+        appContainer.classList.remove("hidden");
+        document.getElementById("usernameDisplay").textContent =
+          currentUser.username;
+        updateTaskListUI();
+        updateTaskStats();
+      }
+
+      // Toggle language
+      function toggleLanguage() {
+        const newLanguage = currentLanguage === "en" ? "uk" : "en";
+        translatePage(newLanguage);
+      }
+
+      // Handle login
+      function handleLogin() {
+        const username = document.getElementById("loginUsername").value;
+        const password = document.getElementById("loginPassword").value;
+
+        const user = users.find(
+          (u) => u.username === username && u.password === password
+        );
+
+        if (user) {
+          currentUser = user;
+          localStorage.setItem("currentUser", JSON.stringify(currentUser));
+          hideAuthModal();
+          showApp();
+          showNotification("success", translations[currentLanguage].login);
+        } else {
+          showNotification("error", translations[currentLanguage].loginError);
+        }
+      }
+
+      // Handle register
+      function handleRegister() {
+        const username = document.getElementById("registerUsername").value;
+        const email = document.getElementById("registerEmail").value;
+        const password = document.getElementById("registerPassword").value;
+        const confirmPassword = document.getElementById(
+          "registerConfirmPassword"
+        ).value;
+
+        if (password !== confirmPassword) {
+          showNotification(
+            "error",
+            translations[currentLanguage].registerError
+          );
+          return;
+        }
+
+        if (users.some((u) => u.username === username)) {
+          showNotification("error", "Username already exists");
+          return;
+        }
+
+        const newUser = {
+          id: Date.now().toString(),
+          username,
+          email,
+          password,
+        };
+
+        users.push(newUser);
+        localStorage.setItem("users", JSON.stringify(users));
+
+        showNotification(
+          "success",
+          translations[currentLanguage].registerSuccess
+        );
+        loginForm.classList.remove("hidden");
+        registerForm.classList.add("hidden");
+
+        // Clear register form
+        document.getElementById("registerUsername").value = "";
+        document.getElementById("registerEmail").value = "";
+        document.getElementById("registerPassword").value = "";
+        document.getElementById("registerConfirmPassword").value = "";
+      }
+
+      // Handle logout
+      function handleLogout() {
+        currentUser = null;
+        localStorage.removeItem("currentUser");
+        showAuthModal();
+
+        // Clear login form
+        document.getElementById("loginUsername").value = "";
+        document.getElementById("loginPassword").value = "";
+      }
+
+      // Add new task
+      function addTask() {
+        const title = document.getElementById("taskTitle").value;
+        const description = document.getElementById("taskDescription").value;
+        const dueDate = document.getElementById("taskDueDate").value;
+        const priority = document.getElementById("taskPriority").value;
+        const category = document.getElementById("taskCategory").value;
+        const tags = document
+          .getElementById("taskTags")
+          .value.split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
+
+        if (!title) {
+          showNotification("error", "Title is required");
+          return;
+        }
+
+        const newTask = {
+          id: Date.now().toString(),
+          userId: currentUser.id,
+          title,
+          description,
+          dueDate: dueDate || null,
+          priority,
+          category,
+          tags,
+          status: "pending",
+          createdAt: new Date().toISOString(),
+          completedAt: null,
+        };
+
+        tasks.push(newTask);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+
+        // Clear form
+        document.getElementById("taskTitle").value = "";
+        document.getElementById("taskDescription").value = "";
+        document.getElementById("taskDueDate").value = "";
+        document.getElementById("taskPriority").value = "medium";
+        document.getElementById("taskCategory").value = "";
+        document.getElementById("taskTags").value = "";
+
+        updateTaskListUI();
+        updateTaskStats();
+        showNotification("success", translations[currentLanguage].taskAdded);
+
+        // Check if we need to schedule a notification for this task
+        if (dueDate) {
+          scheduleDeadlineNotification(newTask);
+        }
+      }
+
+      // Update task list UI
+      function updateTaskListUI(filteredTasks = null) {
+        const userTasks =
+          filteredTasks ||
+          tasks.filter((task) => task.userId === currentUser.id);
+
+        if (userTasks.length === 0) {
+          noTasksMessage.classList.remove("hidden");
+          taskList.innerHTML = "";
+          return;
+        }
+
+        noTasksMessage.classList.add("hidden");
+
+        // Sort tasks
+        const sortBy = document.getElementById("sortTasks").value;
+        const sortOrder = document.getElementById("sortOrder").value;
+
+        userTasks.sort((a, b) => {
+          let comparison = 0;
+
+          if (sortBy === "dueDate") {
+            const dateA = a.dueDate
+              ? new Date(a.dueDate)
+              : new Date("9999-12-31");
+            const dateB = b.dueDate
+              ? new Date(b.dueDate)
+              : new Date("9999-12-31");
+            comparison = dateA - dateB;
+          } else if (sortBy === "priority") {
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+          } else if (sortBy === "createdAt") {
+            comparison = new Date(a.createdAt) - new Date(b.createdAt);
+          }
+
+          return sortOrder === "asc" ? comparison : -comparison;
+        });
+
+        // Generate task items
+        taskList.innerHTML = userTasks
+          .map((task) => createTaskItem(task))
+          .join("");
+
+        // Add event listeners to all task buttons
+        document.querySelectorAll(".view-task-btn").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            showTaskDetail(btn.dataset.taskId)
+          );
+        });
+
+        document.querySelectorAll(".complete-task-btn").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            toggleTaskCompletion(btn.dataset.taskId)
+          );
+        });
+
+        document.querySelectorAll(".edit-task-btn").forEach((btn) => {
+          btn.addEventListener("click", () => editTask(btn.dataset.taskId));
+        });
+
+        document.querySelectorAll(".delete-task-btn").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            confirmDeleteTask(btn.dataset.taskId)
+          );
+        });
+      }
+
+      // Create task item HTML
+      function createTaskItem(task) {
+        const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+        const now = new Date();
+        const isOverdue =
+          dueDate && dueDate < now && task.status !== "completed";
+
+        // Determine status text based on language
+        let statusText = "";
+        if (task.status === "completed") {
+          statusText = translations[currentLanguage].completedStatus;
+        } else if (isOverdue) {
+          statusText = translations[currentLanguage].overdueStatus;
+        } else {
+          statusText = translations[currentLanguage].pendingStatus;
+        }
+
+        // Format due date
+        let dueDateText = translations[currentLanguage].noDueDate;
+        if (dueDate) {
+          dueDateText =
+            dueDate.toLocaleDateString() +
+            " " +
+            dueDate.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+        }
+
+        // Priority class and text
+        const priorityText =
+          translations[currentLanguage][`${task.priority}Priority`];
+
+        return `
+                <div class="task-item bg-white rounded-lg shadow-sm p-4 flex flex-col md:flex-row md:items-center justify-between ${
+                  isOverdue
+                    ? "border-l-4 border-red-500"
+                    : `priority-${task.priority}`
+                }">
+                    <div class="mb-3 md:mb-0 md:mr-4 flex-1">
+                        <div class="flex items-center">
+                            <h3 class="font-semibold text-lg ${
+                              task.status === "completed"
+                                ? "line-through text-gray-500"
+                                : "text-gray-800"
+                            }">${task.title}</h3>
+                            <span class="ml-2 px-2 py-1 text-xs rounded-full ${
+                              task.priority === "high"
+                                ? "bg-red-100 text-red-800"
+                                : task.priority === "medium"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-green-100 text-green-800"
+                            }">
+                                ${priorityText}
+                            </span>
+                        </div>
+                        <p class="text-gray-600 text-sm mt-1 truncate">${
+                          task.description ||
+                          translations[currentLanguage].noDescription
+                        }</p>
+                        <div class="flex flex-wrap items-center mt-2 text-xs text-gray-500 space-x-3">
+                            <span><i class="far fa-calendar-alt mr-1"></i> ${dueDateText}</span>
+                            <span><i class="far fa-clock mr-1"></i> ${statusText}</span>
+                            ${
+                              task.category
+                                ? `<span><i class="fas fa-tag mr-1"></i> ${task.category}</span>`
+                                : ""
+                            }
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="view-task-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm" data-task-id="${
+                          task.id
+                        }">
+                            <i class="fas fa-eye mr-1"></i> ${
+                              translations[currentLanguage].view
+                            }
+                        </button>
+                        <button class="complete-task-btn ${
+                          task.status === "completed"
+                            ? "bg-gray-500 hover:bg-gray-600"
+                            : "bg-green-500 hover:bg-green-600"
+                        } text-white px-3 py-1 rounded-lg text-sm" data-task-id="${
+          task.id
+        }">
+                            <i class="fas ${
+                              task.status === "completed"
+                                ? "fa-undo"
+                                : "fa-check"
+                            } mr-1"></i> ${
+          task.status === "completed"
+            ? translations[currentLanguage].markIncomplete
+            : translations[currentLanguage].markComplete
+        }
+                        </button>
+                        <button class="edit-task-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-sm" data-task-id="${
+                          task.id
+                        }">
+                            <i class="fas fa-edit mr-1"></i> ${
+                              translations[currentLanguage].editTask
+                            }
+                        </button>
+                        <button class="delete-task-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm" data-task-id="${
+                          task.id
+                        }">
+                            <i class="fas fa-trash mr-1"></i> ${
+                              translations[currentLanguage].deleteTask
+                            }
+                        </button>
+                    </div>
+                </div>
+            `;
+      }
+
+      // Show task detail
+      function showTaskDetail(taskId) {
+        const task = tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+        const isOverdue =
+          dueDate && dueDate < new Date() && task.status !== "completed";
+
+        // Determine status text based on language
+        let statusText = "";
+        if (task.status === "completed") {
+          statusText = translations[currentLanguage].completedStatus;
+        } else if (isOverdue) {
+          statusText = translations[currentLanguage].overdueStatus;
+        } else {
+          statusText = translations[currentLanguage].pendingStatus;
+        }
+
+        // Format dates
+        const createdAt = new Date(task.createdAt).toLocaleString();
+        const dueDateText = dueDate
+          ? dueDate.toLocaleString()
+          : translations[currentLanguage].noDueDate;
+        const completedAtText = task.completedAt
+          ? new Date(task.completedAt).toLocaleString()
+          : translations[currentLanguage].notCompleted;
+
+        // Priority text
+        const priorityText = translations[currentLanguage][task.priority];
+
+        document.getElementById("taskDetailContent").innerHTML = `
+                <h2 class="text-xl font-bold mb-4">${task.title}</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-1">${
+                          translations[currentLanguage].status
+                        }</h3>
+                        <p class="px-3 py-1 rounded-full inline-block ${
+                          task.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : isOverdue
+                            ? "bg-red-100 text-red-800"
+                            : "bg-blue-100 text-blue-800"
+                        }">
+                            ${statusText}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-1">${
+                          translations[currentLanguage].priority
+                        }</h3>
+                        <p class="px-3 py-1 rounded-full inline-block ${
+                          task.priority === "high"
+                            ? "bg-red-100 text-red-800"
+                            : task.priority === "medium"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }">
+                            ${priorityText}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-1">${
+                          translations[currentLanguage].createdOn
+                        }</h3>
+                        <p>${createdAt}</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-1">${
+                          translations[currentLanguage].deadline
+                        }</h3>
+                        <p>${dueDateText}</p>
+                    </div>
+                    ${
+                      task.status === "completed"
+                        ? `
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-1">${translations[currentLanguage].completedAt}</h3>
+                        <p>${completedAtText}</p>
+                    </div>
+                    `
+                        : ""
+                    }
+                    ${
+                      task.category
+                        ? `
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-1">${translations[currentLanguage].category}</h3>
+                        <p>${task.category}</p>
+                    </div>
+                    `
+                        : ""
+                    }
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="font-semibold text-gray-700 mb-1">${
+                      translations[currentLanguage].taskDescription
+                    }</h3>
+                    <p class="bg-gray-50 p-3 rounded-lg">${
+                      task.description ||
+                      translations[currentLanguage].noDescription
+                    }</p>
+                </div>
+                
+                ${
+                  task.tags.length > 0
+                    ? `
+                <div class="mb-6">
+                    <h3 class="font-semibold text-gray-700 mb-1">${
+                      translations[currentLanguage].tags
+                    }</h3>
+                    <div class="flex flex-wrap gap-2">
+                        ${task.tags
+                          .map(
+                            (tag) => `
+                            <span class="bg-gray-200 px-3 py-1 rounded-full text-sm">${tag}</span>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+                `
+                    : ""
+                }
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="closeDetailBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i> ${
+                          translations[currentLanguage].close
+                        }
+                    </button>
+                    <button id="toggleCompleteBtn" class="${
+                      task.status === "completed"
+                        ? "bg-gray-500 hover:bg-gray-600"
+                        : "bg-green-500 hover:bg-green-600"
+                    } text-white px-4 py-2 rounded-lg" data-task-id="${
+          task.id
+        }">
+                        <i class="fas ${
+                          task.status === "completed" ? "fa-undo" : "fa-check"
+                        } mr-2"></i> ${
+          task.status === "completed"
+            ? translations[currentLanguage].markIncomplete
+            : translations[currentLanguage].markComplete
+        }
+                    </button>
+                    <button id="editDetailBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg" data-task-id="${
+                      task.id
+                    }">
+                        <i class="fas fa-edit mr-2"></i> ${
+                          translations[currentLanguage].editTask
+                        }
+                    </button>
+                    <button id="deleteDetailBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg" data-task-id="${
+                      task.id
+                    }">
+                        <i class="fas fa-trash mr-2"></i> ${
+                          translations[currentLanguage].deleteTask
+                        }
+                    </button>
+                </div>
+            `;
+
+        // Add event listeners to buttons in modal
+        document
+          .getElementById("toggleCompleteBtn")
+          .addEventListener("click", () => {
+            toggleTaskCompletion(taskId);
+            taskDetailModal.classList.add("hidden");
+          });
+
+        document
+          .getElementById("editDetailBtn")
+          .addEventListener("click", () => {
+            taskDetailModal.classList.add("hidden");
+            editTask(taskId);
+          });
+
+        document
+          .getElementById("deleteDetailBtn")
+          .addEventListener("click", () => {
+            taskDetailModal.classList.add("hidden");
+            confirmDeleteTask(taskId);
+          });
+
+        document
+          .getElementById("closeDetailBtn")
+          .addEventListener("click", () => {
+            taskDetailModal.classList.add("hidden");
+          });
+
+        taskDetailModal.classList.remove("hidden");
+      }
+
+      // Toggle task completion
+      function toggleTaskCompletion(taskId) {
+        const taskIndex = tasks.findIndex((t) => t.id === taskId);
+        if (taskIndex === -1) return;
+
+        if (tasks[taskIndex].status === "completed") {
+          tasks[taskIndex].status = "pending";
+          tasks[taskIndex].completedAt = null;
+        } else {
+          tasks[taskIndex].status = "completed";
+          tasks[taskIndex].completedAt = new Date().toISOString();
+        }
+
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        updateTaskListUI();
+        updateTaskStats();
+        showNotification("success", translations[currentLanguage].taskUpdated);
+      }
+
+      // Edit task
+      function editTask(taskId) {
+        const task = tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        // Populate the form with task data
+        document.getElementById("taskTitle").value = task.title;
+        document.getElementById("taskDescription").value = task.description;
+
+        if (task.dueDate) {
+          const dueDate = new Date(task.dueDate);
+          const formattedDate = dueDate.toISOString().slice(0, 16);
+          document.getElementById("taskDueDate").value = formattedDate;
+        }
+
+        document.getElementById("taskPriority").value = task.priority;
+        document.getElementById("taskCategory").value = task.category || "";
+        document.getElementById("taskTags").value = task.tags.join(", ");
+
+        // Change the add button to save button
+        const addBtn = document.getElementById("addTaskBtn");
+        addBtn.innerHTML = `<i class="fas fa-save mr-2"></i> <span>${translations[currentLanguage].saveChanges}</span>`;
+        addBtn.classList.remove("bg-green-500", "hover:bg-green-600");
+        addBtn.classList.add("bg-blue-500", "hover:bg-blue-600");
+
+        // Remove previous click event and add new one for saving
+        const newAddBtn = addBtn.cloneNode(true);
+        addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+
+        newAddBtn.addEventListener("click", () => saveTaskChanges(taskId));
+
+        // Add cancel button
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className =
+          "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center mx-auto ml-4";
+        cancelBtn.innerHTML = `<i class="fas fa-times mr-2"></i> <span>${translations[currentLanguage].cancel}</span>`;
+        cancelBtn.addEventListener("click", resetTaskForm);
+
+        newAddBtn.parentNode.appendChild(cancelBtn);
+
+        // Scroll to form
+        document
+          .getElementById("taskTitle")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Save task changes
+      function saveTaskChanges(taskId) {
+        const taskIndex = tasks.findIndex((t) => t.id === taskId);
+        if (taskIndex === -1) return;
+
+        const title = document.getElementById("taskTitle").value;
+        const description = document.getElementById("taskDescription").value;
+        const dueDate = document.getElementById("taskDueDate").value;
+        const priority = document.getElementById("taskPriority").value;
+        const category = document.getElementById("taskCategory").value;
+        const tags = document
+          .getElementById("taskTags")
+          .value.split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
+
+        if (!title) {
+          showNotification("error", "Title is required");
+          return;
+        }
+
+        tasks[taskIndex] = {
+          ...tasks[taskIndex],
+          title,
+          description,
+          dueDate: dueDate || null,
+          priority,
+          category,
+          tags,
+        };
+
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        resetTaskForm();
+        updateTaskListUI();
+        updateTaskStats();
+        showNotification("success", translations[currentLanguage].taskUpdated);
+
+        // Reschedule notification if due date changed
+        if (dueDate) {
+          scheduleDeadlineNotification(tasks[taskIndex]);
+        }
+      }
+
+      // Reset task form
+      function resetTaskForm() {
+        document.getElementById("taskTitle").value = "";
+        document.getElementById("taskDescription").value = "";
+        document.getElementById("taskDueDate").value = "";
+        document.getElementById("taskPriority").value = "medium";
+        document.getElementById("taskCategory").value = "";
+        document.getElementById("taskTags").value = "";
+
+        // Reset add button
+        const addBtn = document.getElementById("addTaskBtn");
+        addBtn.innerHTML = `<i class="fas fa-plus-circle mr-2"></i> <span>${translations[currentLanguage].addTask}</span>`;
+        addBtn.classList.remove("bg-blue-500", "hover:bg-blue-600");
+        addBtn.classList.add("bg-green-500", "hover:bg-green-600");
+
+        // Remove cancel button if exists
+        const cancelBtn = addBtn.nextElementSibling;
+        if (
+          cancelBtn &&
+          cancelBtn.textContent.includes(translations[currentLanguage].cancel)
+        ) {
+          cancelBtn.remove();
+        }
+
+        // Remove previous click event and add new one for adding
+        const newAddBtn = addBtn.cloneNode(true);
+        addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+
+        newAddBtn.addEventListener("click", addTask);
+      }
+
+      // Confirm task deletion
+      function confirmDeleteTask(taskId) {
+        if (confirm(translations[currentLanguage].confirmDelete)) {
+          deleteTask(taskId);
+        }
+      }
+
+      // Delete task
+      function deleteTask(taskId) {
+        tasks = tasks.filter((t) => t.id !== taskId);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        updateTaskListUI();
+        updateTaskStats();
+        showNotification("success", translations[currentLanguage].taskDeleted);
+      }
+
+      // Apply filters
+      function applyFilters() {
+        const priorityFilter = document.getElementById("filterPriority").value;
+        const statusFilter = document.getElementById("filterStatus").value;
+
+        let filteredTasks = tasks.filter(
+          (task) => task.userId === currentUser.id
+        );
+
+        if (priorityFilter !== "all") {
+          filteredTasks = filteredTasks.filter(
+            (task) => task.priority === priorityFilter
+          );
+        }
+
+        if (statusFilter !== "all") {
+          if (statusFilter === "completed") {
+            filteredTasks = filteredTasks.filter(
+              (task) => task.status === "completed"
+            );
+          } else if (statusFilter === "pending") {
+            filteredTasks = filteredTasks.filter(
+              (task) => task.status === "pending"
+            );
+          } else if (statusFilter === "overdue") {
+            const now = new Date();
+            filteredTasks = filteredTasks.filter((task) => {
+              if (task.status === "completed") return false;
+              if (!task.dueDate) return false;
+              return new Date(task.dueDate) < now;
+            });
+          }
+        }
+
+        updateTaskListUI(filteredTasks);
+      }
+
+      // Reset filters
+      function resetFilters() {
+        document.getElementById("filterPriority").value = "all";
+        document.getElementById("filterStatus").value = "all";
+        document.getElementById("sortTasks").value = "dueDate";
+        document.getElementById("sortOrder").value = "asc";
+        updateTaskListUI();
+      }
+
+      // Update task statistics
+      function updateTaskStats() {
+        const userTasks = tasks.filter(
+          (task) => task.userId === currentUser.id
+        );
+        const totalTasks = userTasks.length;
+        const completedTasks = userTasks.filter(
+          (task) => task.status === "completed"
+        ).length;
+        const pendingTasks = totalTasks - completedTasks;
+
+        document.getElementById("totalTasks").textContent = totalTasks;
+        document.getElementById("completedTasks").textContent = completedTasks;
+        document.getElementById("pendingTasks").textContent = pendingTasks;
+      }
+
+      // Show import/export modal
+      function showImportExportModal(type) {
+        if (type === "export") {
+          exportContent.classList.remove("hidden");
+          importContent.classList.add("hidden");
+        } else {
+          exportContent.classList.add("hidden");
+          importContent.classList.remove("hidden");
+          document.getElementById("importFile").value = "";
+        }
+
+        importExportModal.classList.remove("hidden");
+      }
+
+      // Hide import/export modal
+      function hideImportExportModal() {
+        importExportModal.classList.add("hidden");
+      }
+
+      // Export tasks
+      function exportTasks() {
+        const format = document.getElementById("exportFormat").value;
+        const userTasks = tasks.filter(
+          (task) => task.userId === currentUser.id
+        );
+
+        if (userTasks.length === 0) {
+          showNotification("error", "No tasks to export");
+          return;
+        }
+
+        let content = "";
+        let filename = `tasks_${new Date().toISOString().slice(0, 10)}`;
+
+        if (format === "txt") {
+          content = userTasks
+            .map((task) => {
+              return (
+                `Title: ${task.title}\n` +
+                `Description: ${task.description || "N/A"}\n` +
+                `Status: ${task.status}\n` +
+                `Priority: ${task.priority}\n` +
+                `Due Date: ${
+                  task.dueDate ? new Date(task.dueDate).toLocaleString() : "N/A"
+                }\n` +
+                `Category: ${task.category || "N/A"}\n` +
+                `Tags: ${task.tags.join(", ") || "N/A"}\n` +
+                `Created At: ${new Date(task.createdAt).toLocaleString()}\n` +
+                (task.completedAt
+                  ? `Completed At: ${new Date(
+                      task.completedAt
+                    ).toLocaleString()}\n`
+                  : "") +
+                "----------------------------------------\n"
+              );
+            })
+            .join("\n");
+
+          filename += ".txt";
+        } else if (format === "json") {
+          content = JSON.stringify(userTasks, null, 2);
+          filename += ".json";
+        }
+
+        const blob = new Blob([content], {
+          type: format === "txt" ? "text/plain" : "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        hideImportExportModal();
+        showNotification(
+          "success",
+          translations[currentLanguage].tasksExported
+        );
+      }
+
+      // Import tasks
+      function importTasks() {
+        const fileInput = document.getElementById("importFile");
+        const format = document.getElementById("importFormat").value;
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showNotification("error", translations[currentLanguage].fileRequired);
+          return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          try {
+            let importedTasks = [];
+
+            if (format === "txt") {
+              // Simple TXT import - just create new tasks with titles from each line
+              const content = e.target.result;
+              const lines = content.split("\n").filter((line) => line.trim());
+
+              importedTasks = lines.map((line) => {
+                return {
+                  id:
+                    Date.now().toString() +
+                    Math.random().toString(36).substr(2, 9),
+                  userId: currentUser.id,
+                  title: line.trim(),
+                  description: "",
+                  dueDate: null,
+                  priority: "medium",
+                  category: "",
+                  tags: [],
+                  status: "pending",
+                  createdAt: new Date().toISOString(),
+                  completedAt: null,
+                };
+              });
+            } else if (format === "json") {
+              // JSON import - try to parse the JSON
+              importedTasks = JSON.parse(e.target.result);
+
+              // Validate imported tasks
+              if (!Array.isArray(importedTasks)) {
+                throw new Error("Invalid JSON format");
+              }
+
+              // Add required fields if missing
+              importedTasks = importedTasks.map((task) => ({
+                id:
+                  task.id ||
+                  Date.now().toString() +
+                    Math.random().toString(36).substr(2, 9),
+                userId: currentUser.id,
+                title: task.title || "Untitled Task",
+                description: task.description || "",
+                dueDate: task.dueDate || null,
+                priority: task.priority || "medium",
+                category: task.category || "",
+                tags: task.tags || [],
+                status: task.status || "pending",
+                createdAt: task.createdAt || new Date().toISOString(),
+                completedAt: task.completedAt || null,
+              }));
+            }
+
+            // Add imported tasks to the main tasks array
+            tasks = [...tasks, ...importedTasks];
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+
+            hideImportExportModal();
+            updateTaskListUI();
+            updateTaskStats();
+            showNotification(
+              "success",
+              translations[currentLanguage].tasksImported
+            );
+          } catch (error) {
+            showNotification(
+              "error",
+              "Error importing tasks: " + error.message
+            );
+          }
+        };
+
+        reader.onerror = function () {
+          showNotification("error", "Error reading file");
+        };
+
+        if (format === "txt") {
+          reader.readAsText(file);
+        } else if (format === "json") {
+          reader.readAsText(file);
+        }
+      }
+
+      // Check for task deadlines
+      function checkDeadlines() {
+        const now = new Date();
+        const notificationTime = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+        tasks.forEach((task) => {
+          if (
+            task.userId === currentUser.id &&
+            task.dueDate &&
+            task.status !== "completed"
+          ) {
+            const dueDate = new Date(task.dueDate);
+            const timeUntilDue = dueDate - now;
+
+            if (timeUntilDue > 0 && timeUntilDue <= notificationTime) {
+              // Check if we've already notified for this task
+              if (!task.notified) {
+                showDeadlineNotification(task);
+                task.notified = true;
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+              }
+            }
+          }
+        });
+      }
+
+      // Schedule deadline notification
+      function scheduleDeadlineNotification(task) {
+        if (!task.dueDate) return;
+
+        const dueDate = new Date(task.dueDate);
+        const now = new Date();
+        const notificationTime = 30 * 60 * 1000; // 30 minutes before deadline
+
+        // If the deadline is in the future and within the notification window
+        if (dueDate > now && dueDate - now <= notificationTime) {
+          const timeUntilNotification = dueDate - now - notificationTime;
+
+          setTimeout(() => {
+            if (task.status !== "completed") {
+              showDeadlineNotification(task);
+              task.notified = true;
+              localStorage.setItem("tasks", JSON.stringify(tasks));
+            }
+          }, timeUntilNotification);
+        }
+      }
+
+      // Show deadline notification
+      function showDeadlineNotification(task) {
+        const notificationMessage = translations[
+          currentLanguage
+        ].notificationMessage.replace("{title}", task.title);
+
+        const notification = document.createElement("div");
+        notification.className =
+          "notification bg-white rounded-lg shadow-lg p-4 max-w-sm border-l-4 border-yellow-500 slide-in";
+        notification.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 pt-0.5">
+                        <i class="fas fa-exclamation-circle text-yellow-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-lg font-medium text-gray-900">${
+                          translations[currentLanguage].notificationTitle
+                        }</h3>
+                        <p class="mt-1 text-gray-600">${notificationMessage}</p>
+                        <div class="mt-2 text-sm text-gray-500">
+                            <i class="far fa-clock mr-1"></i> Due: ${new Date(
+                              task.dueDate
+                            ).toLocaleString()}
+                        </div>
+                    </div>
+                    <button class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-500 close-notification">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+        notificationArea.appendChild(notification);
+
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+          notification.classList.add(
+            "opacity-0",
+            "transition-opacity",
+            "duration-300"
+          );
+          setTimeout(() => notification.remove(), 300);
+        }, 10000);
+
+        // Close button
+        notification
+          .querySelector(".close-notification")
+          .addEventListener("click", () => {
+            notification.classList.add(
+              "opacity-0",
+              "transition-opacity",
+              "duration-300"
+            );
+            setTimeout(() => notification.remove(), 300);
+          });
+      }
+
+      // Show notification
+      function showNotification(type, message) {
+        const notification = document.createElement("div");
+        notification.className = `notification bg-white rounded-lg shadow-lg p-4 max-w-sm border-l-4 ${
+          type === "success" ? "border-green-500" : "border-red-500"
+        } slide-in`;
+        notification.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 pt-0.5">
+                        <i class="fas ${
+                          type === "success"
+                            ? "fa-check-circle text-green-500"
+                            : "fa-exclamation-circle text-red-500"
+                        } text-xl"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm text-gray-600">${message}</p>
+                    </div>
+                    <button class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-500 close-notification">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+        notificationArea.appendChild(notification);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          notification.classList.add(
+            "opacity-0",
+            "transition-opacity",
+            "duration-300"
+          );
+          setTimeout(() => notification.remove(), 300);
+        }, 5000);
+
+        // Close button
+        notification
+          .querySelector(".close-notification")
+          .addEventListener("click", () => {
+            notification.classList.add(
+              "opacity-0",
+              "transition-opacity",
+              "duration-300"
+            );
+            setTimeout(() => notification.remove(), 300);
+          });
+      }
+
+      // Initialize the app when DOM is loaded
+      document.addEventListener("DOMContentLoaded", initApp);
+    </script>
+  </body>
+</html>
